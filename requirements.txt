@@ -1,5 +1,4 @@
 altair
 datetime
 pandas
-pickle
 streamlit
