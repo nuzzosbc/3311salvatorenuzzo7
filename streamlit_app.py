@@ -71,6 +71,49 @@ def part3(df_clean, year, countries):
     )
     return chart
 
+def parts1and2alt(df1_clean, df2_clean, country, suffix1, suffix2):    
+    brush = altair.selection_interval(encodings = ['x'])
+    conditional = altair.when(brush).then(altair.value(1.0)).otherwise(altair.value(0.4))
+    df1_clean_2 = df1_clean[df1_clean['Country'] == country]
+    line_chart = altair.Chart(df1_clean_2).mark_line(point = True).properties(title = f"Inflation in {country}").encode(
+        altair.X('Year:T'),
+        altair.Y('Inflation:Q'),
+        tooltip = [altair.Tooltip('Year:T', format = "%Y"), altair.Tooltip('Inflation:Q')],
+        opacity = conditional
+    ).add_params(
+        brush
+    )
+    
+    zoom = altair.selection_interval(bind = 'scales')
+    name1 = suffix1 + " Inflation"
+    name2 = suffix2 + " Inflation"
+    col_name_1 = "Inflation " + suffix1 + ":Q"
+    col_name_2 = "Inflation " + suffix2 + ":Q"
+    if df1_clean.equals(df2_clean):
+        scatterplot = altair.Chart(df1_clean).mark_point().properties(title = f"{name1} vs {name2}: {country}").encode(
+            altair.X('Inflation:Q', title = name1),
+            altair.Y('Inflation:Q', title = name2),
+            altair.Color('Year:T', timeUnit = 'year', title = 'Year').scale(scheme = altair.SchemeParams(name = 'yellowgreenblue', extent = [-1, 2])),
+            tooltip = [altair.Tooltip('Year:T', format = "%Y"), altair.Tooltip(col_name_1), altair.Tooltip(col_name_2)],
+            opacity = altair.condition(brush, altair.value(0.8), altair.value(0.05))
+        ).add_params(
+            zoom
+        )
+    else:
+        df_combined = pandas.merge(df1_clean, df2_clean, on = ["Country Code", "Year"], how = "left", suffixes = (" " + suffix1, " " + suffix2))
+        df_combined = df_combined[df_combined['Country ' + suffix1] == country]
+        scatterplot = altair.Chart(df_combined).mark_point().properties(title = f"{name1} vs {name2}: {country}").encode(
+            altair.X(col_name_1, title = name1),
+            altair.Y(col_name_2, title = name2),
+            altair.Color('Year:T', timeUnit = 'year', title = 'Year').scale(scheme = altair.SchemeParams(name = 'yellowgreenblue', extent = [-1, 2])),
+            tooltip = [altair.Tooltip('Year:T', format = "%Y"), altair.Tooltip(col_name_1), altair.Tooltip(col_name_2)],
+            opacity = altair.condition(brush, altair.value(0.8), altair.value(0.05))
+        ).add_params(
+            zoom
+        )
+    
+    return altair.vconcat(line_chart, scatterplot).configure_point(size = 75)
+
 streamlit.set_page_config(page_title = "Term Project Dashboard")
 
 streamlit.title("Term Project Dashboard")
@@ -173,4 +216,32 @@ if len(countries) > 0:
     streamlit.altair_chart(part3(df_to_use_1, year_to_use, countries), use_container_width = True)
 else:
     streamlit.write("Select countries above to see the plot")
+
+streamlit.write("**An alternate way for the user to interact with the line chart and histogram seen above. Here we use brushing selection on the line chart instead of the range slider**")
+
+inf_measure_2 = streamlit.selectbox("Select first inflation metric again", options = ['HCPI', 'FCPI', 'ECPI', 'CCPI', 'PPI'], index = 0)
+if inf_measure_2 == "HCPI":
+    df_to_use_1 = df_hcpia_clean
+elif inf_measure_2 == "FCPI":
+    df_to_use_1 = df_fcpia_clean
+elif inf_measure_2 == "ECPI":
+    df_to_use_1 = df_ecpia_clean
+elif inf_measure_2 == "CCPI":
+    df_to_use_1 = df_ccpia_clean
+elif inf_measure_2 == "PPI":
+    df_to_use_1 = df_ppia_clean
+
+inf_measure_3 = streamlit.selectbox("Select second inflation metric again", options = ['HCPI', 'FCPI', 'ECPI', 'CCPI', 'PPI'], index = 1)
+if inf_measure_3 == "HCPI":
+    df_to_use_2 = df_hcpia_clean
+elif inf_measure_3 == "FCPI":
+    df_to_use_2 = df_fcpia_clean
+elif inf_measure_3 == "ECPI":
+    df_to_use_2 = df_ecpia_clean
+elif inf_measure_3 == "CCPI":
+    df_to_use_2 = df_ccpia_clean
+elif inf_measure_3 == "PPI":
+    df_to_use_2 = df_ppia_clean
+
+streamlit.altair_chart(parts1and2alt(df_to_use_1, df_to_use_2, country, inf_measure_2, inf_measure_3), use_container_width = True)
 
