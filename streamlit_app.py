@@ -31,6 +31,11 @@ def part1(df_clean, country):
     )
     return chart
 
+def part1a(df_clean, country):
+    df_clean_2 = df_clean[df_clean['Country'] == country]
+    df_clean_2 = df_clean_2[['Year', 'Inflation']]
+    return df_clean_2
+
 # Scatter plot comparing two inflation measures for a given country through the years
 def part2(df1_clean, df2_clean, country, suffix1, suffix2):
     name1 = suffix1 + " Inflation"
@@ -60,6 +65,16 @@ def part2(df1_clean, df2_clean, country, suffix1, suffix2):
         )
     return chart
 
+def part2a(df1_clean, df2_clean, country, suffix1, suffix2):
+    if df1_clean.equals(df2_clean):
+        df_display = df1_clean
+    else:
+        df_combined = pandas.merge(df1_clean, df2_clean, on = ["Country Code", "Year"], how = "left", suffixes = (" " + suffix1, " " + suffix2))
+        df_combined = df_combined[df_combined['Country ' + suffix1] == country]
+        df_display = df_combined
+    df_display = df_display[['Year', 'Inflation ' + suffix1, 'Inflation ' + suffix2]]
+    return df_display
+
 # Bar chart showing inflation levels in a given year for the countries selected
 def part3(df_clean, year, countries):
     df_clean_2 = df_clean[df_clean['Year'] == pandas.to_datetime(str(year), format = "%Y")]
@@ -70,6 +85,12 @@ def part3(df_clean, year, countries):
         altair.Tooltip(['Country:N', 'Inflation:Q'])
     )
     return chart
+
+def part3a(df_clean, year, countries):
+    df_clean_2 = df_clean[df_clean['Year'] == pandas.to_datetime(str(year), format = "%Y")]
+    df_clean_2 = df_clean_2[df_clean_2['Country'].isin(countries)]
+    df_clean_2 = df_clean_2[['Country', 'Inflation']]
+    return df_clean_2
 
 def parts1and2alt(df1_clean, df2_clean, country, suffix1, suffix2):    
     brush = altair.selection_interval(encodings = ['x'])
@@ -114,13 +135,13 @@ def parts1and2alt(df1_clean, df2_clean, country, suffix1, suffix2):
     
     return altair.vconcat(line_chart, scatterplot).configure_point(size = 75)
 
-streamlit.set_page_config(page_title = "Term Project Dashboard")
+streamlit.set_page_config(page_title = "Term Project Dashboard - Inflation")
 
-streamlit.title("Term Project Dashboard")
+streamlit.title("Visualizing Global Inflation")
 
-streamlit.write("**Visualizing Global Inflation: Multiple metrics since 1970**")
-streamlit.write("Salvatore Nuzzo")
-streamlit.write("CSCI 3311 - June 13, 2025")
+streamlit.write("**Multiple metrics since 1970**")
+streamlit.write("by Salvatore Nuzzo")
+streamlit.write("CSCI 3311 - created June 13, 2025 - updated June 26, 2025")
 
 df_file = open('DF1_3311_SalvatoreNuzzo.bin', 'rb')
 df_dict = pickle.load(df_file)
@@ -137,9 +158,9 @@ df_ecpia_clean = cleaning(df_ecpia)
 df_ccpia_clean = cleaning(df_ccpia)
 df_ppia_clean = cleaning(df_ppia)
 
-streamlit.write("I will add instructions for the user here.")
+streamlit.write("**Introduction**")
 
-streamlit.write("My dashboard deals with global inflation since 1970, as reported in the metrics below. This gives the meaning of the acronyms used in the dashboard. All are reported on an annual basis.")
+streamlit.write("My dashboard deals with global inflation since 1970, as reported in the metrics below. This gives the meaning of the acronyms used throughout. Inflation for all measures is reported on an annual basis, in percentage points.")
 streamlit.write("HCPI - Headline Consumer Price Index")
 streamlit.write("FCPI - Food Consumer Price Index")
 streamlit.write("ECPI - Energy Price Index")
@@ -151,7 +172,7 @@ streamlit.write("How do we see the inflation in the United States and the world 
 streamlit.write("As you use this dashboard, I encourage you to ask these kind of questions about how inflation has changed over time, or how it differs country-to-country. Due to the large number of countries included, you may have to wait some time while the data is updated to represent your selections.")
 streamlit.write("To use the dashboard, follow the instructions for each chart. Use the filters at the left to control the data displayed in the first two charts.")
 streamlit.write("Please note that while you may select any metrics and combinations of data to diplay that you would like, not all inflation metrics are available for all countries in the full year range. The default inflation metric is HCPI, which is generally more supported, but feel free to experiment trying whichever metrics you would like. Note also that for some countries, not all years in inflation are available regardless of the metric, and there may be some gaps in the data presented. Often what may seem like errors are simply the result of missing data based on the current selections.")
-streamlit.write("The source of the data is the World Bank updated Global Database of Inflation https://www.worldbank.org/en/research/brief/inflation-database")
+streamlit.write("The source of the data is the World Bank updated [Global Database of Inflation](%s)" % "https://www.worldbank.org/en/research/brief/inflation-database")
 
 streamlit.sidebar.header("Filters")
 streamlit.sidebar.write("The options below apply to the data displayed in the first two charts, which show data for a particular country. If you are looking to compare multiple countries on inflation, use the bar chart country comparison.")
@@ -165,7 +186,7 @@ filtered_df_ppia_clean = df_ppia_clean[df_ppia_clean['Year'].between(*year_range
 
 country = streamlit.sidebar.selectbox("Select a country for the first two charts", options = filtered_df_hcpia_clean['Country'].unique(), index = 190)
 
-streamlit.write("**Inflation over time for a particular country**")
+streamlit.subheader("Inflation over time for a particular country")
 streamlit.write("This graph shows the inflation in the country you selected. It is filtered by year. The default country is the United States.")
 
 inf_measure_1 = streamlit.selectbox("Select an inflation metric", options = ['HCPI', 'FCPI', 'ECPI', 'CCPI', 'PPI'])
@@ -182,7 +203,10 @@ elif inf_measure_1 == "PPI":
 
 streamlit.altair_chart(part1(df_to_use_1, country), use_container_width = True)
 
-streamlit.write("**Scatter plot comparing two inflation measures for a particular country through the years**")
+with streamlit.expander("Table Format: Inflation in " + country):
+    streamlit.dataframe(part1a(df_to_use_1, country), column_config = {"Year": streamlit.column_config.DateColumn("Year", format = "YYYY")}, width = 200, hide_index = True)
+
+streamlit.subheader("Scatter plot comparing two inflation measures for a particular country through the years")
 streamlit.write("This plot helps you to compare correlations of two inflation metrics that you select below. The country selected is the same as in the line chart. This plot may also be filtered by year.")
 
 inf_measure_2 = streamlit.selectbox("Select first inflation metric", options = ['HCPI', 'FCPI', 'ECPI', 'CCPI', 'PPI'], index = 0)
@@ -211,7 +235,10 @@ elif inf_measure_3 == "PPI":
 
 streamlit.altair_chart(part2(df_to_use_1, df_to_use_2, country, inf_measure_2, inf_measure_3), use_container_width = True)
 
-streamlit.write("**Bar chart showing inflation levels in a particular year for the countries selected**")
+with streamlit.expander("Table Format: " + inf_measure_2 + " vs " + inf_measure_3 + " Inflation: " + country):
+    streamlit.dataframe(part2a(df_to_use_1, df_to_use_2, country, inf_measure_2, inf_measure_3), column_config = {"Year": streamlit.column_config.DateColumn("Year", format = "YYYY")}, width = 400, hide_index = True)
+
+streamlit.subheader("Bar chart showing inflation levels in a particular year for the countries selected")
 streamlit.write("Here you can select all the countries you would like below, as well as a particular year, and compare their inflation levels. You must select at least one country to see a chart. You may choose as many as have data available.")
 
 inf_measure_1 = streamlit.selectbox("Select an inflation metric", options = ['HCPI', 'FCPI', 'EPCI', 'CCPI', 'PPI'])
@@ -235,7 +262,13 @@ if len(countries) > 0:
 else:
     streamlit.write("Select countries above to see the plot")
 
-streamlit.write("**An alternate way for the user to interact with the line chart and histogram seen above. Here we use brushing selection on the line chart instead of the range slider**")
+with streamlit.expander("Table Format: Inflation by country, " + str(year_to_use)):
+    if len(countries) > 0:
+        streamlit.dataframe(part3a(df_to_use_1, year_to_use, countries), width = 200, hide_index = True)
+    else:
+        streamlit.write("Select countries for the plot above to get the table")
+
+streamlit.subheader("An alternate way for the user to interact with the line chart and histogram seen above. Here we use brushing selection on the line chart instead of the range slider")
 
 inf_measure_2 = streamlit.selectbox("Select first inflation metric again", options = ['HCPI', 'FCPI', 'ECPI', 'CCPI', 'PPI'], index = 0)
 if inf_measure_2 == "HCPI":
