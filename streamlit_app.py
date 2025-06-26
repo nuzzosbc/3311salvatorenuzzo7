@@ -139,7 +139,22 @@ df_ppia_clean = cleaning(df_ppia)
 
 streamlit.write("I will add instructions for the user here.")
 
+streamlit.write("My dashboard deals with global inflation since 1970, as reported in the metrics below. This gives the meaning of the acronyms used in the dashboard. All are reported on an annual basis.")
+streamlit.write("HCPI - Headline Consumer Price Index")
+streamlit.write("FCPI - Food Consumer Price Index")
+streamlit.write("ECPI - Energy Price Index")
+streamlit.write("CCPI - Official Core Consumer Price Index")
+streamlit.write("PPI - Producer Price Index")
+streamlit.write("Generally, the questions my dashboard explores are:")
+streamlit.write("How do the differing measures of inflation compare to one another? Do they generally agree? Is this true within a specific country?")
+streamlit.write("How do we see the inflation in the United States and the world changing over time?")
+streamlit.write("As you use this dashboard, I encourage you to ask these kind of questions about how inflation has changed over time, or how it differs country-to-country. Due to the large number of countries included, you may have to wait some time while the data is updated to represent your selections.")
+streamlit.write("To use the dashboard, follow the instructions for each chart. Use the filters at the left to control the data displayed in the first two charts.")
+streamlit.write("Please note that while you may select any metrics and combinations of data to diplay that you would like, not all inflation metrics are available for all countries in the full year range. The default inflation metric is HCPI, which is generally more supported, but feel free to experiment trying whichever metrics you would like. Note also that for some countries, not all years in inflation are available regardless of the metric, and there may be some gaps in the data presented. Often what may seem like errors are simply the result of missing data based on the current selections.")
+streamlit.write("The source of the data is the World Bank updated Global Database of Inflation https://www.worldbank.org/en/research/brief/inflation-database")
+
 streamlit.sidebar.header("Filters")
+streamlit.sidebar.write("The options below apply to the data displayed in the first two charts, which show data for a particular country. If you are looking to compare multiple countries on inflation, use the bar chart country comparison.")
 year_range = streamlit.sidebar.slider("Select range of years to include", datetime.datetime(1970, 1, 1), datetime.datetime(2024, 1, 1), (datetime.datetime(1970, 1, 1), datetime.datetime(2024, 1, 1)), format = "YYYY")
 
 filtered_df_hcpia_clean = df_hcpia_clean[df_hcpia_clean['Year'].between(*year_range)]
@@ -151,6 +166,7 @@ filtered_df_ppia_clean = df_ppia_clean[df_ppia_clean['Year'].between(*year_range
 country = streamlit.sidebar.selectbox("Select a country for the first two charts", options = filtered_df_hcpia_clean['Country'].unique(), index = 190)
 
 streamlit.write("**Inflation over time for a particular country**")
+streamlit.write("This graph shows the inflation in the country you selected. It is filtered by year. The default country is the United States.")
 
 inf_measure_1 = streamlit.selectbox("Select an inflation metric", options = ['HCPI', 'FCPI', 'ECPI', 'CCPI', 'PPI'])
 if inf_measure_1 == "HCPI":
@@ -167,6 +183,7 @@ elif inf_measure_1 == "PPI":
 streamlit.altair_chart(part1(df_to_use_1, country), use_container_width = True)
 
 streamlit.write("**Scatter plot comparing two inflation measures for a particular country through the years**")
+streamlit.write("This plot helps you to compare correlations of two inflation metrics that you select below. The country selected is the same as in the line chart. This plot may also be filtered by year.")
 
 inf_measure_2 = streamlit.selectbox("Select first inflation metric", options = ['HCPI', 'FCPI', 'ECPI', 'CCPI', 'PPI'], index = 0)
 if inf_measure_2 == "HCPI":
@@ -195,6 +212,7 @@ elif inf_measure_3 == "PPI":
 streamlit.altair_chart(part2(df_to_use_1, df_to_use_2, country, inf_measure_2, inf_measure_3), use_container_width = True)
 
 streamlit.write("**Bar chart showing inflation levels in a particular year for the countries selected**")
+streamlit.write("Here you can select all the countries you would like below, as well as a particular year, and compare their inflation levels. You must select at least one country to see a chart. You may choose as many as have data available.")
 
 inf_measure_1 = streamlit.selectbox("Select an inflation metric", options = ['HCPI', 'FCPI', 'EPCI', 'CCPI', 'PPI'])
 if inf_measure_1 == "HCPI":
